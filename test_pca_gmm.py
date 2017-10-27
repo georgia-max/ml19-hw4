@@ -22,7 +22,7 @@ class TestHomework4(unittest.TestCase):
     def test_pca(self):
         """
         Perform PCA on the synthetic data and check that the returned values are as expected.
-        
+
         :return: None
         """
         new_data, variances, eigenvectors = pca(self.data)
@@ -35,8 +35,11 @@ class TestHomework4(unittest.TestCase):
         assert np.sum(variances[:2]) > np.sum(variances[2:]), "Variances of first two dimensions were not larger than" \
                                                               "variances of the rest of the noise dimensions"
 
-        assert np.mean(new_data[0, :] * new_data[1, :]) > np.mean(new_data[2, :] * new_data[3, :]), \
-            "Correlation of first two dimensions is not higher than correlation of next two dimensions"
+        assert np.var(eigenvectors[:, 0].T.dot(self.data)) > np.var(eigenvectors[:, 1].T.dot(self.data)), \
+            "First principle direction doesn't have more variance than second principle direction"
+
+        assert np.var(eigenvectors[:, 1].T.dot(self.data)) > np.var(eigenvectors[:, 2].T.dot(self.data)), \
+            "Second principle direction doesn't have more variance than third principle direction"
 
         vector_0_1 = self.data[:, 1] - self.data[:, 0]
         new_vector_0_1 = new_data[:, 0] - new_data[:, 1]
@@ -47,6 +50,10 @@ class TestHomework4(unittest.TestCase):
 
         assert np.allclose(eigenvectors.T.dot(eigenvectors), np.eye(64)), "Eigenvectors were not orthogonal"
 
+        reconstructed = eigenvectors.dot(new_data)
+        assert np.allclose(reconstructed[:, 0] - self.data[:, 0], reconstructed[:, 1] - self.data[:, 1]), \
+            "Reconstructed points are not similar."
+
     def set_up_clustering(self):
         """
         Set up the clustering task by running PCA and splitting the data into training and testing sets.
@@ -56,6 +63,9 @@ class TestHomework4(unittest.TestCase):
 
         # truncate dimensions to just the first two
         small_data = new_data[:2, :]
+
+        # if you haven't implemented PCA yet, you can test GMM by replacing the above code with
+        # small_data = self.data[:2, :]
 
         # split data for validation
         d, n = small_data.shape

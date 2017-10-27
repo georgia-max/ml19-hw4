@@ -24,4 +24,4 @@ def pca(data):
     # End of your contributed code
     #####################################################################
 
-    return new_data, variances, eigenvectors
+    return np.real(new_data), np.real(variances), np.real(eigenvectors)
