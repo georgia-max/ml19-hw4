@@ -1,5 +1,4 @@
 """Test class for principal components analysis and Gaussian mixture modeling."""
-from __future__ import division
 import unittest
 from scipy.io import loadmat
 from pca import *

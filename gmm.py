@@ -1,7 +1,6 @@
 """Functions for fitting Gaussian mixture models"""
-from __future__ import division
 import numpy as np
-import pylab as plt
+import matplotlib.pyplot as plt
 from scipy.stats import multivariate_normal
 
 
@@ -103,7 +102,6 @@ def compute_membership_probs(data, means, sigmas, probs):
     # Insert your code to update cluster membership probabilities
     # for each data point
     ##############################################################
-
 
     return membership
 
