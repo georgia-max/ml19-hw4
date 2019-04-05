@@ -240,10 +240,6 @@ def logsumexp(matrix, dim=None):
     :return: numerically stable equivalent of np.log(np.sum(np.exp(matrix), dim)))
     :rtype: ndarray
     """
-    try:
-        with np.errstate(over='raise', under='raise'):
-            return np.log(np.sum(np.exp(matrix), dim, keepdims=True))
-    except FloatingPointError:
-        max_val = np.nan_to_num(matrix.max(axis=dim, keepdims=True))
-        with np.errstate(under='ignore', divide='ignore'):
-            return np.log(np.sum(np.exp(matrix - max_val), dim, keepdims=True)) + max_val
+    max_val = np.nan_to_num(matrix.max(axis=dim, keepdims=True))
+    with np.errstate(under='ignore', divide='ignore'):
+        return np.log(np.sum(np.exp(matrix - max_val), dim, keepdims=True)) + max_val
