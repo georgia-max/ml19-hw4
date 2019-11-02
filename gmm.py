@@ -17,7 +17,8 @@ def gmm(data, num_clusters, plot=False):
     matrices of size d by d, and probs is a length-k vector of cluster-membership probabilities
     :rtype: tuple
     """
-    d, n = data.shape
+    d, n = data.shape #(2,958)
+    print(d,n)
 
     # initialize clusters
 
@@ -49,8 +50,27 @@ def gmm(data, num_clusters, plot=False):
 
         ###################################################################
         # Insert your code to update cluster prior, means, and covariances
-        # (probs, means, sigma)
+        # (probs, means, sigmas)
         ###################################################################
+
+        print("meme", membership.shape) #(1,n)
+        probs = np.sum(membership, axis=1)/n #(1,)
+        print("probs",probs)
+        means_sum= np.sum(np.multiply(membership,data),axis=1).reshape((d,1))
+        print(means_sum.shape)
+        sum_mem= np.sum(membership,axis=1)
+        print(sum_mem.shape)
+        means=np.true_divide(means_sum,sum_mem)
+        print(means.shape)
+        print("means", means)
+        x_imu= data-means
+        first= membership * x_imu
+        print(first.shape)
+
+        nominator= np.sum(first.dot(x_imu.T),axis=1)
+        print("no",nominator.shape)
+        sigmas= nominator/sum_mem+ reg
+        print("sigmas",sigmas)
 
         ##################################################################
         # End of code to compute probs, means, and sigma
@@ -95,12 +115,24 @@ def compute_membership_probs(data, means, sigmas, probs):
     d, n = data.shape
 
     num_clusters = probs.size
-
-    membership = np.zeros((num_clusters, n))
-
+    membership = np.zeros((num_clusters ,n))
+    print("means",means.shape) #(2,1)
+    print("data",data.shape)
+    print("prob",probs)
+    print("sigmas",sigmas)
     ##############################################################
     # Insert your code to update cluster membership probabilities
     # for each data point
+    sam_gau= gaussian_ll(data, means, sigmas)
+    print(sam_gau)
+    sam_gau_stack= np.tile(sam_gau,(num_clusters,1))
+    print("sam_gua_stack",sam_gau_stack)
+    numerator= np.add(np.log(probs),sam_gau_stack)
+    print(numerator)
+    denominator = np.sum(numerator,axis=0)
+
+    log_membership = np.divide(numerator,denominator)
+    membership =np.exp(log_membership)
     ##############################################################
 
     return membership
@@ -143,7 +175,7 @@ def gaussian_ll(data, mean, sigma):
 
     :param data: d x n matrix of n d-dimensional data points. Each column is an example.
     :type data: ndarray
-    :param mean: length-d vector mean
+    :param mean: length-d vector mean 2
     :type mean: arraylike
     :param sigma: shape (d, d) covariance matrix
     :type sigma: ndarray

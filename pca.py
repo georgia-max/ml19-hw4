@@ -20,6 +20,25 @@ def pca(data):
     # not allowed to use a pre-built pca in your implementation
     #####################################################################
 
+    col_mean =np.mean(data, axis=1)
+
+    center_data = data.T-col_mean
+    # import matplotlib.pyplot as plt
+    # plt.plot(center_data[:, 0], center_data[:, 1], '*')
+    # plt.show()
+    # ex=np.sum(center_data, axis=0)
+    # print("this should be zero",ex)
+
+    cov = np.cov(center_data.T)
+    egi_values,eigenvectors = np.linalg.eig(cov) #V(64,) #D(64,64)
+    idx= np.argsort(egi_values)[::-1]
+    variances = egi_values[idx]
+    eigenvectors =eigenvectors[:,idx]
+
+    new_data = eigenvectors.T.dot(center_data.T)
+    # print(new_data.T)
+
+
     #####################################################################
     # End of your contributed code
     #####################################################################
