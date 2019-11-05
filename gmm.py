@@ -9,7 +9,7 @@ def gmm(data, num_clusters, plot=False):
     Compute the cluster probabilities, means, and covariances of a Gaussian mixture model
     :param data: d x n matrix of n d-dimensional data points
     :type data: ndarray
-    :param num_clusters: number of Gaussians to fit
+    :param num_clusters: number of Gaussians to fitflatten()
     :type num_clusters: int
     :param plot: mode for plotting two-dimensional data. Can be False (no plotting), 'iter' (plot every iteration), or
     'final' (plot the final Gaussians).
@@ -18,10 +18,11 @@ def gmm(data, num_clusters, plot=False):
     :rtype: tuple
     """
     d, n = data.shape
-    print("For this set of data:")
-    print("d (dimension) is", d)
-    print("n (data points) is", n)
-    print("num_clusters is", num_clusters)
+    print("==================================================")
+    print("Start GMM with %d clusters. For this set of data:" % num_clusters)
+    print("dimension \"d\" is %d, data points \"n\" is %d" % (d, n))
+    print("==================================================")
+
 
     # initialize clusters
 
@@ -48,8 +49,13 @@ def gmm(data, num_clusters, plot=False):
     # add this to covariance matrices to prevent them from getting too skinny
     reg = 1e-4 * np.eye(d)
 
+    if plot == 'final':
+        print("Processing Iterations...")
+
     for i in range(max_iters):
-        print("=======starting iteration=======", i)
+        if plot is 'iter':
+            print("Starting iteration %d" % i)
+
         membership_log = compute_membership_probs(data, means, sigmas, probs)
         membership = np.exp(membership_log)
 
@@ -59,22 +65,19 @@ def gmm(data, num_clusters, plot=False):
         ###################################################################
         # Compute probs in log space
         probs = np.exp(logsumexp(membership_log, dim=1)) / n
-        #print("probs\n", probs, probs.shape)
 
         # Compute mean in regular (non-log) space
         means_numerator = np.matmul(data, membership.T)
         means_denominator = np.sum(membership.T, axis=0).reshape((1,num_clusters))
         means = np.divide(means_numerator, means_denominator)
-        #print("means\n", means.shape)
 
         # Compute Covariance in regular (non-log) space
+        for j in range (0, num_clusters):
+            data_sub_mean = np.subtract(data, means[:,j].reshape(d, 1))    # (d, n)
+            sigmas_numerator = np.multiply(membership[j,:], data_sub_mean).dot(data_sub_mean.T)
+            sigmas_j = np.divide(sigmas_numerator, means_denominator[0,j])
+            sigmas[j] = sigmas_j + reg  # Add regulators
 
-        for i in range (0, num_clusters):
-            data_sub_mean = np.subtract(data, means[:,i].reshape(d, 1))    # (d, n)
-            #print("data_sub_mean", data_sub_mean.shape)
-            sigmas_numerator = np.multiply(membership[i,:], data_sub_mean).dot(data_sub_mean.T)
-            sigmas_i = np.divide(sigmas_numerator, means_denominator[0,i])
-            sigmas.append(sigmas_i)
         ##################################################################
         # End of code to compute probs, means, and sigma
         ##################################################################
@@ -91,7 +94,13 @@ def gmm(data, num_clusters, plot=False):
         change = np.linalg.norm(prev_probs - probs)
         prev_probs = probs
         if change < tolerance:
+            print("change (%1.2E) is smaller than tolerance (%1.2E)." %(change, tolerance))
+            print("Aborting loops...")
+            print("Complete %d iterations.\n" % (i+1))
             break
+
+        if i == max_iters:
+            print("Reached Max iteration: %d" % max_iters)
 
     if d == 2 and plot is 'final' or plot is 'iter':
         plot_gmm(data, means, sigmas, probs)
@@ -129,18 +138,14 @@ def compute_membership_probs(data, means, sigmas, probs):
 
     gaussian_log_pdf = np.zeros((num_clusters, n))
     for i in range (0, num_clusters):   # Loop through num_clusters to complete gaussian_pdf
-        #print("means[:, i]\n", means[:, i], means[:, i].shape)
-        #print("sigmas[i]\n", sigmas[i], sigmas[i].shape)
         gaussian_log_pdf_i = gaussian_ll(data, means[:,i], sigmas[i]).reshape((1, n))
         gaussian_log_pdf[i,:] = gaussian_log_pdf_i.reshape((1, n))
-    #print("gaussian_log_pdf", gaussian_log_pdf, gaussian_log_pdf.shape)
 
     probs_log = np.log(probs).reshape(num_clusters, 1)
     numerator_log = probs_log + gaussian_log_pdf
     denominator_log = logsumexp(numerator_log, dim=0)
     membership = numerator_log - denominator_log
 
-    #print("membership\n", membership.shape)
     ##############################################################
 
     return membership
